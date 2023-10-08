@@ -30,6 +30,7 @@ def solicitar_exames(request):
 
 @login_required
 def fechar_pedido(request):
+
     exames_id = request.POST.getlist('exames')
     solicitacao_exames = TipoExames.objects.filter(id__in=exames_id)
 
@@ -51,4 +52,37 @@ def fechar_pedido(request):
     pedido_exame.save()
     messages.add_message(request, constants.SUCCESS,
                          'Pedido de exame realizado com sucesso!')
-    return redirect('/exames/ver_pedidos/')
+    return redirect('/exames/gerenciar_pedidos/')
+
+
+@login_required
+def gerenciar_pedidos(request):
+    pedidos_exames = PedidosExame.objects.filter(usuario=request.user)
+    return render(request, 'gerenciar_pedidos.html', {'pedidos_exames': pedidos_exames})
+
+
+@login_required
+def cancelar_pedido(request, pedido_id):
+
+    pedido = PedidosExame.objects.get(id=pedido_id)
+    if not pedido.usuario == request.user:
+        messages.add_message(request, constants.ERROR,
+                             'Esse pedido não é seu.')
+        return redirect('/exames/gerenciar_pedidos/')
+    pedido.agendado = False
+    pedido.save()
+
+    messages.add_message(request, constants.SUCCESS,
+                         'Pedido excluido com sucesso')
+    return redirect('/exames/gerenciar_pedidos/')
+
+
+@login_required
+def gerenciar_exames(request):
+    exames = SolicitacaoExame.objects.filter(usuario=request.user)
+    return render(request, 'gerenciar_exames.html', {'exames': exames})
+
+
+@login_required
+def permitir_abrir_exame(request, exame_id):
+    
